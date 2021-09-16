@@ -154,6 +154,7 @@ class World():
                     # enemy
                     zombie = Enemy(x * tile_size, y * tile_size)
                     zombie_group.add(zombie)
+                    print(str(x * tile_size) + ' ' + str(y * tile_size))
                     pass
 
 
@@ -630,8 +631,7 @@ class Player():
                 self.jumped = True
                 self.jumpCooldown = False
 
-            elif key[
-                pygame.K_SPACE] and self.doubleJump == True and self.jumped == False and self.jumpCooldown == False and self.currentEnergy >= 200 and self.statWaitTime == 0:
+            elif key[pygame.K_SPACE] and self.doubleJump == True and self.jumped == False and self.jumpCooldown == False and self.currentEnergy >= 200 and self.statWaitTime == 0:
                 self.vel_y = -7
                 self.jumped = True
                 self.jumpCooldown = False
@@ -733,9 +733,9 @@ class Player():
         return (game_over, start_time, dx, dy)
 
     def energyUpdate(self):
-        pygame.draw.rect(screen, (254, 1, 154), (22, 11, self.currentEnergy / self.energy_ratio, 20))
+        pygame.draw.rect(screen, (0,153, 219), (22, 11, self.currentEnergy / self.energy_ratio, 20))
         pygame.draw.rect(screen, (255, 255, 255), (22, 11, self.energy_bar_length, 20), 2)
-        pygame.draw.rect(screen, (0, 255, 0), (22, 37, self.currentHealth / self.health_ratio, 20))
+        pygame.draw.rect(screen, (99, 199, 77), (22, 37, self.currentHealth / self.health_ratio, 20))
         pygame.draw.rect(screen, (255, 255, 255), (22, 37, self.energy_bar_length, 20), 2)
 
 
@@ -820,6 +820,7 @@ while run:
 
     screen.blit(energy_img, (250, 2))
     screen.blit(health_img, (5, 25))
+ 
 
     screen.blit(spell_slot, (20, 70))
     screen.blit(spell_slot, (80, 70))
