@@ -152,8 +152,10 @@ class World():
 
                 elif tile == 11:
                     # enemy
+                    #zombie = Enemy(750, 250)
                     zombie = Enemy(x * tile_size, y * tile_size)
                     zombie_group.add(zombie)
+                    # debugging zombie spawn
                     print(str(x * tile_size) + ' ' + str(y * tile_size))
                     pass
 
@@ -341,6 +343,9 @@ class Enemy(pygame.sprite.Sprite):
         projectile_group.add(projectile)
 
     def update(self):
+        dx = 0
+        dy = 0
+
         if self.freeze > 0:
             self.freezeUpdate()
 
@@ -351,7 +356,7 @@ class Enemy(pygame.sprite.Sprite):
             self.burnCountdown = fps * 2
             self.currentHealth -= (0.15 * self.health)
 
-        self.rect.x += (self.move_direction * self.currentSpeed)
+        dx += (self.move_direction * self.currentSpeed)
 
         self.move_counter += 1
 
@@ -374,7 +379,13 @@ class Enemy(pygame.sprite.Sprite):
             self.burnTime -= 1
 
         # scroll
-        self.rect.x += screen_scroll[0]
+
+        for tile in world.obstacle_list:
+            # (x direction)
+            if tile[1].colliderect(self.rect.x + dx, self.rect.y, self.width, self.height):
+                dx = 0
+                self.move_direction *= -1
+        self.rect.x += dx
 
     def freezeUpdate(self):
         if self.freeze == 1:
@@ -517,7 +528,7 @@ class Player():
     def update(self, game_over, start_time):
 
         walk_cooldown = 7
-        screen_scroll[0] = 0
+
 
         # change in x, y (deltaX, deltaY)
         dx = 0
@@ -773,6 +784,8 @@ while run:
     screen_scroll[0] = math.floor((player.rect.x - screen_scroll[0] - 380)/20)
     #print(screen_scroll)
     player.rect.x -= screen_scroll[0]
+    for zombie in zombie_group:
+        zombie.rect.x -= screen_scroll[0]
     levelProgress[0] += screen_scroll[0]
 
     for proj in projectile_group:
