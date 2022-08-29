@@ -9,7 +9,9 @@ from time import sleep
 import time
 
 from pygame.locals import *
+import aws
 
+print(aws.getScore  ('e793419b-17db-4938-a719-db8bcb929225', 'Eric Zhang'))
 
 pygame.init()
 
