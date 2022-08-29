@@ -39,4 +39,4 @@ def setScore(id, name, score):
             raise
     else:
             return response['Attributes']
-//print(setScore('e793419b-17db-4938-a719-db8bcb929225', 'Eric Zhang', 10))
+#print(setScore('e793419b-17db-4938-a719-db8bcb929225', 'Eric Zhang', 10))
