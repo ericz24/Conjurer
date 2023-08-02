@@ -5,18 +5,16 @@ import numpy as np
 import csv
 import math
 from time import sleep
-# import boto3
 
 import time
 import asyncio
 
 from pygame.locals import *
-# import aws
 
+#import aws
 UID = 'e793419b-17db-4938-a719-db8bcb929225'
 NAME = 'Eric Zhang'
 
-# print(aws.getScore(UID, NAME))
 
 pygame.init()
 
@@ -70,9 +68,6 @@ hold4 = False
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Test')
 
-# defining game variables
-
-# tile_size = 30
 game_over = 0
 
 # load images
@@ -101,14 +96,7 @@ health_img = pygame.transform.scale(health_img, (44, 44))
 
 
 
-# def fade_out():
-#     fadein = pygame.Surface((screen_width, screen_height))
-#     fadein = fadeout.convert()
-#     fadein.fill((0, 0, 0))
-#     for i in range(255):
-#         fadein.set_alpha(255 - i)
-#         screen.blit(fadein, (0, 0))
-#         pygame.display.update()
+
 
 def draw_bg():
     for x in range(5):
@@ -169,10 +157,7 @@ class World():
                     img_rect.x = x * tile_size
                     img_rect.y = y * tile_size
                     tile_data = (img, img_rect)
-                    self.obstacle_list.append(tile_data)
-                    #elif tile >= 1 and tile <= 3:
-                        # decoration
-                        #pass
+                    self.obstacle_list.append(tile_data)   
 
                 elif tile == 11:
                     # enemy
@@ -605,7 +590,6 @@ class Player():
         # statmove counters
         self.reserveCounter = 0
 
-        # self.dead_image = pygame.image.load()
         self.images_left = []
         self.index = 0
         self.counter = 0
@@ -846,17 +830,6 @@ class Player():
                 if end.rect.colliderect(self.rect):
                     game_over = 1
 
-            # update scroll based on player pos
-            # if (self.rect.right + dx > screen_width - SCROLL_THRESH and bg_scroll < (
-            #         world.level_length * tile_size) - screen_width) \
-            #         or (self.rect.left + dx < SCROLL_THRESH and bg_scroll > abs(dx)):
-            #    # self.rect.x -= dx
-            #    # screen_scroll[0] = -dx
-
-            # update player position
-            # if self.rect.left + dx < 0 or self.rect.right + dx > screen_height:
-            #     dx = 0
-
             self.rect.x += dx
             self.rect.y += dy 
 
@@ -958,14 +931,8 @@ async def main():
             start_time = player_tuple[1]
             dx = player_tuple[2]
             dy = player_tuple[3]
-            
-
-            
-
-            #screen_scroll[0] += dx
 
             screen_scroll[0] = math.floor((player.rect.x - screen_scroll[0] - 380)/20)
-            #print(screen_scroll)
             player.rect.x -= screen_scroll[0]
             levelProgress[0] += screen_scroll[0]
 
@@ -1012,9 +979,7 @@ async def main():
                 
                 pygame.draw.rect(screen, BLACK, (0, 0, screen_width, fadeCounter))
                 pygame.draw.rect(screen, BLACK, (0, (screen_height / 2) + ((screen_height / 2) - fadeCounter), screen_width, screen_height / 2))
-                #pygame.draw.rect(screen, BLACK, (0, (screen_height / 2) - , screen_width, screen_height / 2))
-
-                # collide cooldown
+                
 
             
 
@@ -1023,9 +988,6 @@ async def main():
             if energyCooldown > 10:
                 player.rest()
                 energyCooldown = 0
-
-            
-            # screen.blit(textsurface, (0, 0))
 
             if screenshake > 0:
                 screenshake -= 1
@@ -1084,9 +1046,6 @@ async def main():
             pygame.draw.rect(screen, BLACK, (0, 0, screen_width, fadeCounter))
             pygame.draw.rect(screen, BLACK, (0, screen_height - fadeCounter, screen_width, fadeAm) )
 
-            
-                    
-            
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
