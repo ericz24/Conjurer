@@ -7,11 +7,14 @@ import math
 from time import sleep
 
 import time
+import asyncio
 
 from pygame.locals import *
-import aws
 
-print(aws.getScore  ('e793419b-17db-4938-a719-db8bcb929225', 'Eric Zhang'))
+#import aws
+UID = 'e793419b-17db-4938-a719-db8bcb929225'
+NAME = 'Eric Zhang'
+
 
 pygame.init()
 
@@ -65,9 +68,6 @@ hold4 = False
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Test')
 
-# defining game variables
-
-# tile_size = 30
 game_over = 0
 
 # load images
@@ -96,14 +96,7 @@ health_img = pygame.transform.scale(health_img, (44, 44))
 
 
 
-# def fade_out():
-#     fadein = pygame.Surface((screen_width, screen_height))
-#     fadein = fadeout.convert()
-#     fadein.fill((0, 0, 0))
-#     for i in range(255):
-#         fadein.set_alpha(255 - i)
-#         screen.blit(fadein, (0, 0))
-#         pygame.display.update()
+
 
 def draw_bg():
     for x in range(5):
@@ -164,10 +157,7 @@ class World():
                     img_rect.x = x * tile_size
                     img_rect.y = y * tile_size
                     tile_data = (img, img_rect)
-                    self.obstacle_list.append(tile_data)
-                    #elif tile >= 1 and tile <= 3:
-                        # decoration
-                        #pass
+                    self.obstacle_list.append(tile_data)   
 
                 elif tile == 11:
                     # enemy
@@ -186,7 +176,6 @@ class World():
                     end = End(x * tile_size, y * tile_size)
                     end_group.add(end)
                     pass
-
 
 
     def draw(self):
@@ -313,7 +302,9 @@ class Projectile(pygame.sprite.Sprite):
     def __init__(self, x, y, direction):
         pygame.sprite.Sprite.__init__(self)
         self.speed = 5
-        
+        self.name = 'projectile'
+
+        self.imagesize = [21, 10]
         self.direction = direction
         self.image = projectile_img
         if self.direction == -1:
@@ -415,7 +406,7 @@ class Projectile(pygame.sprite.Sprite):
                 if self.dIndex > self.dImages:
                     self.kill()
                 else:
-                    self.image = pygame.image.load(f'assets/spell_assets/fireball_d{self.dIndex}.png').convert_alpha()
+                    self.image = pygame.image.load(f'assets/spell_assets/{self.name}/{self.name}_d{self.dIndex}.png').convert_alpha()
 
         elif self.hit == True and self.hAnimation == True: # hit animation
             self.hCounter += 1
@@ -426,8 +417,8 @@ class Projectile(pygame.sprite.Sprite):
                 if self.hIndex > self.hImages:
                     self.kill()
                 else:
-                    self.image = pygame.image.load(f'assets/spell_assets/fireball_h{self.hIndex}.png').convert_alpha()
-            
+                    self.image = pygame.image.load(f'assets/spell_assets/{self.name}/{self.name}_h{self.hIndex}.png').convert_alpha()
+                    self.image = pygame.transform.scale(self.image, (max(self.imagesize[0],self.imagesize[1]), max(self.imagesize[0],self.imagesize[1])))
 
         else: #bullet has died but no disappear animation or hit
             self.kill()
@@ -438,6 +429,8 @@ class Fireball(Projectile):
     def __init__(self, x, y, direction):
         super().__init__(x, y, direction)
         self.dmg = round(np.clip(np.random.normal(loc=25, scale=2.3), 20, 30))
+        self.name = 'fireball'
+        self.imagesize = [40, 24]
        
         self.disappearAnimation = True
         self.cooldown = 50
@@ -447,15 +440,15 @@ class Fireball(Projectile):
        
         if burnRNG < 10:
             self.burnTime = 6 * fps
-            print('burned')
+            # print('burned')
 
         self.dAnimation = True
         self.hAnimation = True
-        self.dImages = 0
-        self.hImages = 0
+        self.dImages = 4
+        self.hImages = 4
 
         self.energyCost = 60
-        self.image = pygame.image.load('assets/spell_assets/fireball1.png').convert_alpha()
+        self.image = pygame.image.load('assets/spell_assets/fireball/fireball1.png').convert_alpha()
         self.image = pygame.transform.scale(self.image, (40, 24))
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
@@ -597,7 +590,6 @@ class Player():
         # statmove counters
         self.reserveCounter = 0
 
-        # self.dead_image = pygame.image.load()
         self.images_left = []
         self.index = 0
         self.counter = 0
@@ -652,10 +644,11 @@ class Player():
         self.statCooldown = 1500
 
 
-    def update(self, game_over, start_time):
+    def update(self, game_over, start_time, dt):
 
         walk_cooldown = 7
         screen_scroll[0] = 0
+        dt= dt
 
         # change in x, y (deltaX, deltaY)
         dx = 0
@@ -837,19 +830,8 @@ class Player():
                 if end.rect.colliderect(self.rect):
                     game_over = 1
 
-            # update scroll based on player pos
-            # if (self.rect.right + dx > screen_width - SCROLL_THRESH and bg_scroll < (
-            #         world.level_length * tile_size) - screen_width) \
-            #         or (self.rect.left + dx < SCROLL_THRESH and bg_scroll > abs(dx)):
-            #    # self.rect.x -= dx
-            #    # screen_scroll[0] = -dx
-
-            # update player position
-            # if self.rect.left + dx < 0 or self.rect.right + dx > screen_height:
-            #     dx = 0
-
             self.rect.x += dx
-            self.rect.y += dy
+            self.rect.y += dy 
 
         # draw player onto screen
         if (self.attackCooldown1 > 0):
@@ -926,158 +908,155 @@ run = True
 energyCooldown = 0
 
 
+async def main():
+    global run
+    global game_over
+    global screenshake
+    global bg_scroll
+    global start_time
+    global world
+    global fadeCounter
+    global energyCooldown
+    while run:
+        #your main game loop       
+        clock.tick(fps)
+        if game_over == 0:
+            levelcooldown = True
+            dt = clock.tick()
 
-while run:
-    
-    clock.tick(fps)
-    
-    
-
-    if game_over == 0:
-        levelcooldown = True
-
-        
-
-        player_tuple = player.update(game_over, start_time)
-        game_over = player_tuple[0]
-        start_time = player_tuple[1]
-        dx = player_tuple[2]
-        dy = player_tuple[3]
-        
-
-        
-
-        #screen_scroll[0] += dx
-
-        screen_scroll[0] = math.floor((player.rect.x - screen_scroll[0] - 380)/20)
-        #print(screen_scroll)
-        player.rect.x -= screen_scroll[0]
-        levelProgress[0] += screen_scroll[0]
-
-        for proj in projectile_group:
-            proj.startX -= screen_scroll[0]
-
-
-
-        draw_bg()
-        world.draw()
-        
-
-        dead_group.update()
-        end_group.update()
-        zombie_group.update()
-        projectile_group.update()
-        collectible_group.update()
-        
-        bg_scroll += screen_scroll[0]
-    
-        player.update(game_over, start_time)
-        end_group.draw(screen)
-        projectile_group.draw(screen)
-        collectible_group.draw(screen)
-        zombie_group.draw(screen) 
-        dead_group.draw(screen)
-        
-        
-
-        screen.blit(energy_img, (250, 2))
-        screen.blit(health_img, (5, 25))
-
-        screen.blit(spell_slot, (20, 70))
-        screen.blit(spell_slot, (80, 70))
-        screen.blit(spell_slot, (140, 70))
-        screen.blit(spell_slot, (200, 70))
-
-         #fade in
-        
-        if fadeCounter > 0:
-            fadeCounter -= 8
-            if fadeCounter < 0:
-                 fadeCounter = 0
             
+
+            player_tuple = player.update(game_over, start_time, dt)
+            game_over = player_tuple[0]
+            start_time = player_tuple[1]
+            dx = player_tuple[2]
+            dy = player_tuple[3]
+
+            screen_scroll[0] = math.floor((player.rect.x - screen_scroll[0] - 380)/20)
+            player.rect.x -= screen_scroll[0]
+            levelProgress[0] += screen_scroll[0]
+
+            for proj in projectile_group:
+                proj.startX -= screen_scroll[0]
+
+
+
+            draw_bg()
+            world.draw()
+            
+
+            dead_group.update()
+            end_group.update()
+            zombie_group.update()
+            projectile_group.update()
+            collectible_group.update()
+            
+            bg_scroll += screen_scroll[0]
+        
+            player.update(game_over, start_time, dt)
+            end_group.draw(screen)
+            projectile_group.draw(screen)
+            collectible_group.draw(screen)
+            zombie_group.draw(screen) 
+            dead_group.draw(screen)
+            
+            
+
+            screen.blit(energy_img, (250, 2))
+            screen.blit(health_img, (5, 25))
+
+            screen.blit(spell_slot, (20, 70))
+            screen.blit(spell_slot, (80, 70))
+            screen.blit(spell_slot, (140, 70))
+            screen.blit(spell_slot, (200, 70))
+
+            #fade in
+            
+            if fadeCounter > 0:
+                fadeCounter -= 8
+                if fadeCounter < 0:
+                    fadeCounter = 0
+                
+                pygame.draw.rect(screen, BLACK, (0, 0, screen_width, fadeCounter))
+                pygame.draw.rect(screen, BLACK, (0, (screen_height / 2) + ((screen_height / 2) - fadeCounter), screen_width, screen_height / 2))
+                
+
+            
+
+            energyCooldown += dt
+
+            if energyCooldown > 10:
+                player.rest()
+                energyCooldown = 0
+
+            if screenshake > 0:
+                screenshake -= 1
+
+            render_offset = [0, 0]
+            if screenshake:
+                render_offset[0] = random.randint(0, 8) - 4
+                render_offset[1] = random.randint(0, 8) - 4
+
+            
+            
+        else: 
+        
+
+            
+            
+            bg_scroll += screen_scroll[0]
+            player.update(game_over, start_time, dt)
+            end_group.draw(screen)
+            projectile_group.draw(screen)
+            collectible_group.draw(screen)
+            zombie_group.draw(screen) 
+            dead_group.draw(screen)
+            
+
+            
+            
+
+            screen.blit(energy_img, (250, 2))
+            screen.blit(health_img, (5, 25))
+            
+            screen.blit(spell_slot, (20, 70))
+            screen.blit(spell_slot, (80, 70))
+            screen.blit(spell_slot, (140, 70))
+            screen.blit(spell_slot, (200, 70))
+
+            if fadeCounter < fadeAm:
+                fadeCounter += 5
+                if fadeCounter >= fadeAm:
+                    fadeCounter = fadeAm
+                    if game_over == 1 and levelcooldown == True:
+                        
+                        level += 1
+                        levelcooldown = False
+
+                        if level <= TOTAL_LEVELS:
+                            world_data = []
+                            world = reset_level(level)
+                            game_over = 0
+                            fadeCounter = screen_height / 2
+                            player.rect.x = spawn[0]
+                            player.rect.y = spawn[1]
+
+                        
+                
             pygame.draw.rect(screen, BLACK, (0, 0, screen_width, fadeCounter))
-            pygame.draw.rect(screen, BLACK, (0, (screen_height / 2) + ((screen_height / 2) - fadeCounter), screen_width, screen_height / 2))
-            #pygame.draw.rect(screen, BLACK, (0, (screen_height / 2) - , screen_width, screen_height / 2))
+            pygame.draw.rect(screen, BLACK, (0, screen_height - fadeCounter, screen_width, fadeAm) )
 
-            # collide cooldown
 
-        dt = clock.tick()
-
-        energyCooldown += dt
-
-        if energyCooldown > 10:
-            player.rest()
-            energyCooldown = 0
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
 
         
-        # screen.blit(textsurface, (0, 0))
-
-        if screenshake > 0:
-            screenshake -= 1
-
-        render_offset = [0, 0]
-        if screenshake:
-            render_offset[0] = random.randint(0, 8) - 4
-            render_offset[1] = random.randint(0, 8) - 4
-
-        
-        
-    else: 
-       
-
-        
-        
-        bg_scroll += screen_scroll[0]
-        player.update(game_over, start_time)
-        end_group.draw(screen)
-        projectile_group.draw(screen)
-        collectible_group.draw(screen)
-        zombie_group.draw(screen) 
-        dead_group.draw(screen)
-        
-
-        
-        
-
-        screen.blit(energy_img, (250, 2))
-        screen.blit(health_img, (5, 25))
-        
-        screen.blit(spell_slot, (20, 70))
-        screen.blit(spell_slot, (80, 70))
-        screen.blit(spell_slot, (140, 70))
-        screen.blit(spell_slot, (200, 70))
-
-        if fadeCounter < fadeAm:
-            fadeCounter += 5
-            if fadeCounter >= fadeAm:
-                fadeCounter = fadeAm
-                if game_over == 1 and levelcooldown == True:
-                    
-                    level += 1
-                    levelcooldown = False
-
-                    if level <= TOTAL_LEVELS:
-                        world_data = []
-                        world = reset_level(level)
-                        game_over = 0
-                        fadeCounter = screen_height / 2
-                        player.rect.x = spawn[0]
-                        player.rect.y = spawn[1]
-
-                    
-            
-        pygame.draw.rect(screen, BLACK, (0, 0, screen_width, fadeCounter))
-        pygame.draw.rect(screen, BLACK, (0, screen_height - fadeCounter, screen_width, fadeAm) )
-
-        
-                 
-        
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-
+        pygame.display.update()
     
-    pygame.display.update()
+        await asyncio.sleep(0)
+        if not run:
+            pygame.quit()
+            return
 
-pygame.quit()
+asyncio.run(main())
